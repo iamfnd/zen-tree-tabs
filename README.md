@@ -4,6 +4,16 @@ Sidebery-style **tree tabs** built into [Zen Browser](https://zen-browser.app)'s
 
 It's a userChrome.js mod (loaded with [fx-autoconfig](https://github.com/MrOtherGuy/fx-autoconfig)), so it works on Zen's real tab strip and plays along with spaces, split views, pinned tabs and folders.
 
+## Screenshots
+
+### Expanded tree
+
+![Expanded parent tab with two indented child tabs and tree guide lines](docs/screenshots/expanded-tree.png)
+
+### Collapsed tree
+
+![Collapsed parent tab with a badge showing two hidden child tabs](docs/screenshots/collapsed-tree.png)
+
 ## Features
 
 - **Automatic nesting** — tabs opened from a link become children of that tab.
