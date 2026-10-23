@@ -5,6 +5,7 @@
 //
 //   node tests/scenarios.mjs [path/to/zen-tree-tabs.uc.js]
 import fs from "node:fs";
+import assert from "node:assert/strict";
 import { fileURLToPath } from "node:url";
 const scriptPath = process.argv[2] ?? fileURLToPath(new URL("../src/zen-tree-tabs.uc.js", import.meta.url));
 const src = fs.readFileSync(scriptPath, "utf8");
@@ -243,4 +244,35 @@ console.log("--- inactive spaces (Zen 1.22: gBrowser.tabs = active space only) -
   const d = t => R.get(t)?.depth ?? 0;
   console.log(`active s1: a1(${d(a1)}) a2(${d(a2)})   inactive s2: b1(${d(b1)}) b2(${d(b2)}) b3(${d(b3)})`);
   document.querySelectorAll = realQSA;
+}
+
+// Collapse clicks hide the branch, not its siblings, and never select an
+// unrelated parent. Collapsing the active branch must leave focus visible.
+{
+  tabs.length = 0; groups.length = 0;
+  const parent = new Tab("parent"); const child = new Tab("child");
+  const grandchild = new Tab("grandchild"); const sibling = new Tab("sibling");
+  tabs.push(parent, child, grandchild, sibling);
+  ZT.setParent(child, parent); ZT.setParent(grandchild, child); ZT.render();
+  const twisty = { closest: () => parent };
+  const click = () => L.click({
+    target: { closest: sel => sel === ".ztt-twisty" ? twisty : null },
+    button: 0, stopPropagation() {}, preventDefault() {},
+  });
+  gBrowser.selectedTab = sibling;
+  click();
+  assert.equal(parent.hasAttribute("ztt-collapsed"), true);
+  assert.equal(child.hasAttribute("ztt-hidden"), true);
+  assert.equal(grandchild.hasAttribute("ztt-hidden"), true);
+  assert.equal(sibling.hasAttribute("ztt-hidden"), false);
+  assert.equal(gBrowser.selectedTab, sibling);
+  click();
+  assert.equal(child.hasAttribute("ztt-hidden"), false);
+  assert.equal(grandchild.hasAttribute("ztt-hidden"), false);
+  assert.equal(gBrowser.selectedTab, sibling);
+  gBrowser.selectedTab = grandchild;
+  click();
+  assert.equal(gBrowser.selectedTab, parent);
+  assert.equal(parent.hasAttribute("ztt-hidden"), false);
+  console.log("collapse click: branch visibility and selection assertions passed");
 }

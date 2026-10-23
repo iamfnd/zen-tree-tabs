@@ -355,9 +355,16 @@
         clearRender(tab);
       }
       const badge = tab.querySelector(".ztt-count");
+      const twisty = tab.querySelector(".ztt-twisty");
+      if (twisty) {
+        const collapsed = isCollapsed(nodeOf(tab));
+        twisty.setAttribute("aria-expanded", String(!collapsed));
+        twisty.setAttribute("aria-label", collapsed ? "Expand subtree" : "Collapse subtree");
+        twisty.title = collapsed ? "Expand subtree" : "Collapse subtree";
+      }
       if (badge) {
         const node = nodeOf(tab);
-        badge.value = leadTab(node) === tab ? hiddenCounts.get(node) ?? "" : "";
+        badge.textContent = leadTab(node) === tab ? hiddenCounts.get(node) ?? "" : "";
       }
     }
     for (const group of gBrowser.tabGroups) {
@@ -417,18 +424,19 @@
     }
   }
 
-  // The twisty and the hidden-count badge sit in the favicon's stack, on top
-  // of the icon, so they never take horizontal space: only depth moves a tab.
+  // Keep tree controls beside the tab title, clear of favicon/status overlays.
   function ensureTwisty(tab) {
-    const stack = tab.querySelector(".tab-icon-stack");
-    if (!stack || stack.querySelector(".ztt-twisty")) {
+    const content = tab.querySelector(".tab-content");
+    if (!content || content.querySelector(".ztt-twisty")) {
       return;
     }
-    const twisty = document.createXULElement("image");
+    const twisty = document.createElementNS("http://www.w3.org/1999/xhtml", "button");
     twisty.className = "ztt-twisty";
-    const badge = document.createXULElement("label");
+    twisty.type = "button";
+    const badge = document.createElementNS("http://www.w3.org/1999/xhtml", "span");
     badge.className = "ztt-count";
-    stack.append(twisty, badge);
+    content.insertBefore(badge, tab.querySelector(".tab-close-button"));
+    content.insertBefore(twisty, tab.querySelector(".tab-close-button"));
   }
 
   function toggleCollapsed(node, collapsed = !isCollapsed(node)) {
@@ -1158,6 +1166,13 @@
     );
   }
 
+  // Let the button synthesize its keyboard click without the tab handling it.
+  listen(gBrowser.tabContainer, "keydown", event => {
+    if (event.target.closest?.(".ztt-twisty") && ["Enter", " "].includes(event.key)) {
+      event.stopPropagation();
+    }
+  }, true);
+
   // Ctrl+Alt+Shift+R: reload this script (and its CSS) without restarting.
   listen(
     window,
@@ -1224,7 +1239,7 @@
 
   window.ZenTreeTabs = { destroy, reload, render, toggleCollapsed, childrenOf, setParent, rendered };
 
-  for (const old of gBrowser.tabContainer.querySelectorAll(".tab-content > .ztt-twisty")) {
+  for (const old of gBrowser.tabContainer.querySelectorAll(".ztt-twisty, .ztt-count")) {
     old.remove();
   }
   document.documentElement.style.setProperty("--ztt-indent", `${INDENT_PX}px`);

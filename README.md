@@ -9,7 +9,7 @@ It's a userChrome.js mod (loaded with [fx-autoconfig](https://github.com/MrOther
 - **Automatic nesting** — tabs opened from a link become children of that tab.
 - **New tabs (Ctrl+T)** go right below the current tab, as its sibling (configurable: sibling / child / end).
 - **Indentation & guide lines** — uses Zen's native indent (same step as its folders) plus thin per-level lines.
-- **Collapse / expand** — hover a parent's favicon to get a chevron; collapsed parents show a badge with the number of hidden tabs. Selecting a hidden tab (Ctrl+Tab, search…) expands its branch.
+- **Collapse / expand** — a separate chevron beside the close/reset button toggles a parent's subtree without replacing its favicon or selecting an unrelated tab. Collapsed parents show a vertically centered hidden-tab count, including on hover. Selecting a hidden tab (Ctrl+Tab, search…) expands its branch.
 - **Drag & drop with depth picking** — the drop line shows where the tab lands and at what level; drag sideways to nest deeper or pull out. The future parent is highlighted (or the space header, for a top-level drop). Subtrees move along with their root.
 - **Split views are tree nodes** — a split nests, has children, and drags as one unit. Drag-onto-a-tab splitting still works (hover a tab's middle).
 - **Pinned tabs have their own tree** per space. Pinning/unpinning a tab moves its whole subtree; you can drag between the pinned and normal trees at any depth.
@@ -45,7 +45,7 @@ Restart Zen. In the Browser Console (Ctrl+Shift+J) you should see `[zen-tree-tab
 |---|---|
 | Nest a tab | Open it from a link, or drag it and move the pointer **right** (one indent ≈ one level) |
 | Un-nest | Drag and move the pointer **left** |
-| Collapse / expand | Hover a parent's favicon → click the chevron |
+| Collapse / expand | Hover a parent, then click its chevron beside the close/reset button (also revealed on keyboard focus; Enter / Space toggles) |
 | Move a whole branch | Drag its root tab |
 | Pin a branch | Pin its root (context menu or drag into the pinned area) |
 | Make a split | Drag a tab onto the middle of another tab and hold briefly |
@@ -66,7 +66,7 @@ Look & feel lives in `src/zen-tree-tabs.css` (`--ztt-guide-width`, `--ztt-guide-
 ## Development
 
 - Edit files in `src/` — they're symlinked into the profile — then press **Ctrl+Alt+Shift+R** in Zen.
-- `node tests/scenarios.mjs` runs the tree logic against a mocked tab strip (no browser needed) and prints the resulting trees for nesting, drag/drop, splits, pinned tabs and new-tab placement.
+- `node tests/scenarios.mjs` runs the tree logic against a mocked tab strip (no browser needed), prints the resulting trees for nesting, drag/drop, splits, pinned tabs and new-tab placement, and asserts collapse-click visibility and selection behavior.
 - How it works and which Zen internals it relies on: [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md).
 
 ## Known limitations

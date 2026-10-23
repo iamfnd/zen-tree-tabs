@@ -36,8 +36,8 @@
   }
 }
 
-/* ── Collapse twisty & hidden-count badge ─────────────────────────────── */
-/* Both sit on top of the favicon, so they take no horizontal space. */
+/* ── Collapse button & hidden-count badge ─────────────────────────────── */
+/* Separate trailing controls leave favicons and status overlays untouched. */
 
 .tabbrowser-tab .ztt-twisty,
 .tabbrowser-tab .ztt-count {
@@ -45,63 +45,93 @@
 }
 
 :root[zen-sidebar-expanded="true"] .tabbrowser-tab[ztt-has-children] {
-  /* Hovering a parent swaps its favicon for the chevron. */
-  &:hover {
-    & .ztt-twisty {
-      display: flex;
-    }
-    & :is(.tab-icon-image, .tab-icon-pending, .tab-throbber, .tab-icon-overlay) {
-      opacity: 0 !important;
+  & :is(.tab-close-button, .tab-reset-button) {
+    visibility: visible !important;
+    max-width: var(--size-item-medium, 24px);
+  }
+
+  &:not(:hover):not([multiselected][selected]) :is(.tab-close-button, .tab-reset-button) {
+    max-width: 0;
+    padding-inline: 0;
+    opacity: 0;
+    pointer-events: none;
+  }
+
+  @media (prefers-reduced-motion: no-preference) {
+    & :is(.ztt-twisty, .tab-close-button, .tab-reset-button) {
+      transition: width 180ms ease, max-width 180ms ease, padding 180ms ease, opacity 180ms ease !important;
     }
   }
 
   & .ztt-twisty {
-    width: 16px;
-    height: 16px;
-    padding: 2px;
-    box-sizing: border-box;
-    list-style-image: url("chrome://browser/skin/zen-icons/arrow-down.svg");
-    -moz-context-properties: fill, fill-opacity;
-    fill: currentColor;
-    fill-opacity: 0.85;
-    border-radius: 4px;
-    transition: rotate 0.15s ease;
+    display: flex;
+    opacity: 0;
+    pointer-events: none;
+    flex: 0 0 auto;
+    align-items: center;
+    justify-content: center;
+    width: 0;
+    height: 24px;
+    margin: 0;
+    padding: 0;
+    overflow: hidden;
+    border: 0;
+    border-radius: var(--tab-border-radius, 4px);
+    color: inherit;
+    background: transparent;
     cursor: default;
 
+    &::before {
+      content: "";
+      width: 16px;
+      height: 16px;
+      flex-shrink: 0;
+      background-color: currentColor;
+      mask: url("chrome://browser/skin/zen-icons/arrow-down.svg") center / contain no-repeat;
+      pointer-events: none;
+    }
+
     &:hover {
-      fill-opacity: 1;
-      background-color: color-mix(in srgb, currentColor 15%, transparent);
+      background-color: var(--tab-close-button-hover-bgcolor, color-mix(in srgb, currentColor 15%, transparent));
+    }
+
+    &:focus-visible {
+      outline: 2px solid var(--ztt-accent);
+      outline-offset: -2px;
     }
   }
 
+  &:hover .ztt-twisty,
+  & .ztt-twisty:focus-visible {
+    width: 24px;
+    padding: 4px;
+    opacity: 1;
+    pointer-events: auto;
+  }
+
   &[ztt-collapsed] {
-    & .ztt-twisty {
+    & .ztt-twisty::before {
       rotate: -90deg;
     }
 
-    /* Collapsed: keep the favicon, add a count of hidden tabs. */
-    & .ztt-count:not([value=""]) {
-      display: flex;
-      align-self: end;
-      justify-self: end;
-      translate: 45% 35%;
-      min-width: 12px;
-      height: 12px;
-      margin: 0;
-      padding: 0 3px;
+    & .ztt-count:not(:empty) {
+      display: block;
+      flex: 0 0 auto;
+      align-self: center;
+      align-content: center;
+      text-align: center;
+      text-box: trim-both cap alphabetic;
+      min-width: 18px;
+      height: 18px;
+      margin: 0 2px;
+      padding: 0 4px;
       box-sizing: border-box;
-      align-items: center;
-      justify-content: center;
-      border-radius: 6px;
-      font-size: 8px;
-      font-weight: 700;
-      line-height: 1;
+      border-radius: 9px;
+      font: 600 10px / 1 system-ui;
+      font-variant-numeric: tabular-nums;
       color: white;
       background: color-mix(in srgb, var(--ztt-accent) 85%, black);
       pointer-events: none;
-    }
-    &:hover .ztt-count {
-      display: none;
     }
   }
 }

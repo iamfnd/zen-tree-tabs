@@ -28,7 +28,8 @@ How Zen Tree Tabs works, and which Zen/Firefox internals it depends on. Read thi
 - Walk each section's nodes in order with a stack of open ancestors. A node nests only if its parent is on the stack, i.e. directly above its subtree; otherwise it renders at depth 0. A node without a parent clears the stack.
 - Depth → `--zen-folder-indent` on the node element (Zen's own indent property — its CSS applies `margin-inline-start: var(--zen-folder-indent)` to tabs and split groups when the sidebar is expanded). The element gets `ztt-indented` so we only ever remove indents we set (Zen folders use the same property).
 - Guide lines are a `::before` on nested nodes, drawn in the indent margin with a repeating gradient (one line per level, centred in its column). Tabs sit edge to edge, so lines join up across a subtree.
-- The collapse chevron and hidden-count badge are injected into the favicon's `.tab-icon-stack` (a stack, so they overlay the icon and take no width).
+- The collapse button and hidden-count badge are injected into `.tab-content` before the close button, not into the favicon stack. The HTML button supports Enter/Space and exposes `aria-expanded`; capture-phase mouse handlers keep collapse clicks out of tab selection/drag handling. The chevron takes no width off-hover, allowing the title to extend; hovering the tab or focusing the button restores its width. Chevron and close/reset widths, padding and opacity ease over 180 ms in both directions; reduced-motion users get instant changes. Close/reset buttons keep their native display rules but shrink off-hover instead of using layout collapse, avoiding a jump in the title.
+- The chevron uses a `currentColor` mask to match the close icon without SVG context-fill crossing an HTML/XUL boundary. The badge centers its text with `text-align` / `align-content` and trims font leading with `text-box: trim-both cap alphabetic`, centering the visible digits rather than the font's line box.
 - Collapsed subtrees are hidden with `ztt-hidden` → `display: none`. Selecting a hidden tab expands its ancestors.
 
 Renders are batched with `requestAnimationFrame` (`scheduleRender`).
@@ -75,8 +76,8 @@ Checked against Zen 1.22.3b (Firefox 156). If something breaks after an update, 
 | `SessionStore.get/set/deleteCustomTabValue`, `SSTabRestoring` | persistence |
 | `#zen-drag-indicator`, `zen-split-fake-tab`, `zen-folder` | drag hand-off |
 | `tab._dragData.screenX`, drag type `application/x-moz-tabbrowser-tab` | drag pickup fallback |
-| `.tab-icon-stack` | twisty & badge |
+| `.tab-content`, `.tab-close-button`, `.tab-reset-button` | trailing collapse button & count, native close/reset layout |
 
 ## Tests
 
-`tests/scenarios.mjs` evaluates the script against a mocked `gBrowser`/Zen (tabs, split groups, pinned/normal containers with fake geometry, a fake drop line) and prints the resulting tree after each scenario (`·` = one level, `[A|B]` = split, `|` = pinned/normal boundary). It covers nesting, closing, drag depth picking, drops into the empty space, text-node drag starts, splits, split-by-drag, pinned trees, cross-section drags and new-tab placement. It doesn't assert — read the output against the scenario labels.
+`tests/scenarios.mjs` evaluates the script against a mocked `gBrowser`/Zen (tabs, split groups, pinned/normal containers with fake geometry, a fake drop line) and prints the resulting tree after each scenario (`·` = one level, `[A|B]` = split, `|` = pinned/normal boundary). It covers nesting, closing, drag depth picking, drops into the empty space, text-node drag starts, splits, split-by-drag, pinned trees, cross-section drags and new-tab placement. Collapse clicks have assertions for descendant visibility, sibling isolation and selection; the other scenarios print output for inspection. Native layout and keyboard activation require a Zen chrome smoke check.
