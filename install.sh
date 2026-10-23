@@ -4,14 +4,27 @@
 set -euo pipefail
 
 repo="$(cd "$(dirname "$0")" && pwd)"
-zen_root="$HOME/.zen"
-zen_install="/opt/zen-browser-bin"
+zen_install="${ZEN_INSTALL_DIR:-/opt/zen-browser-bin}"
 
 profile="${1:-}"
 if [[ -z "$profile" ]]; then
-  # The profile the installed Zen actually launches with.
-  rel="$(awk -F= '/^Default=/{print $2; exit}' "$zen_root/installs.ini")"
-  profile="$zen_root/$rel"
+  # Prefer the current XDG location, then the older ~/.zen layout.
+  for zen_root in "${XDG_CONFIG_HOME:-$HOME/.config}/zen" "$HOME/.zen"; do
+    [[ -f "$zen_root/installs.ini" ]] || continue
+    rel="$(awk -F= '/^Default=/{sub(/\r$/, "", $2); print $2; exit}' "$zen_root/installs.ini")"
+    [[ -n "$rel" ]] || continue
+    candidate="$rel"
+    [[ "$candidate" = /* ]] || candidate="$zen_root/$candidate"
+    if [[ -d "$candidate" ]]; then
+      profile="$candidate"
+      break
+    fi
+  done
+  if [[ -z "$profile" ]]; then
+    echo "No Zen profile found. Open about:profiles in Zen and pass its Root Directory:" >&2
+    printf '  %q "/path/to/zen/profile"\n' "$0" >&2
+    exit 1
+  fi
 fi
 [[ -d "$profile" ]] || { echo "Profile not found: $profile" >&2; exit 1; }
 echo "Profile: $profile"
@@ -29,13 +42,13 @@ ln -sfn "$repo/src/zen-tree-tabs.css" "$chrome/resources/zen-tree-tabs.css"
 rm -f "$chrome/CSS/zen-tree-tabs.uc.css" # Older layout; the script loads its own CSS now.
 echo "Profile side installed."
 
-if [[ -f "$zen_install/config.js" ]]; then
-  echo "Loader already present in $zen_install."
+if [[ -f "$zen_install/config.js" && -f "$zen_install/defaults/pref/config-prefs.js" ]]; then
+  echo "Both program loader files are present in $zen_install."
 else
   echo
-  echo "One-time loader install into the Zen program directory (needs root):"
-  echo "  sudo cp '$fxac/program/config.js' '$zen_install/'"
-  echo "  sudo cp '$fxac/program/defaults/pref/config-prefs.js' '$zen_install/defaults/pref/'"
+  echo "Program loader incomplete in $zen_install; installation is not finished."
+  echo "Run this one command to install both loader files (needs root):"
+  printf '  sudo cp -rv -- %q %q\n' "$fxac/program/." "$zen_install/"
 fi
 echo
 echo "Then restart Zen. Afterwards, edits reload with Ctrl+Alt+Shift+R (no restart,"

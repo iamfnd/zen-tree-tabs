@@ -38,18 +38,18 @@ cd zen-tree-tabs
 ./install.sh                      # or: ./install.sh "/path/to/zen/profile"
 ```
 
-Profile auto-detection reads `~/.zen/installs.ini`. For other profile locations, pass the profile's **Root Directory** from `about:profiles` explicitly. Keep this checkout in place: the installed JS and CSS are symlinks into it.
+Profile auto-detection reads `installs.ini` under `${XDG_CONFIG_HOME:-~/.config}/zen`, then `~/.zen`, using the first default profile that exists. For other profile locations, pass the profile's **Root Directory** from `about:profiles` explicitly. Keep this checkout in place: the installed JS and CSS are symlinks into it.
 
 The script:
 
 1. clones fx-autoconfig into `vendor/` unless it's already present,
 2. copies its loader files into your profile's `chrome/utils/`,
 3. symlinks `src/zen-tree-tabs.uc.js` → `chrome/JS/` and `src/zen-tree-tabs.css` → `chrome/resources/`,
-4. if `/opt/zen-browser-bin/config.js` is missing, prints two `sudo cp` commands for the one-time program-side loader (`config.js` and `defaults/pref/config-prefs.js`). Run those yourself, adjusting the destinations if Zen is installed elsewhere. An existing `config.js` only skips this message; the script does not verify that both fx-autoconfig loader files are installed.
+4. checks that **both** program-side loader files exist: `config.js` and `defaults/pref/config-prefs.js`. If either is missing, it reports that installation is incomplete and prints one `sudo cp -rv` command to install both. Run that command before restarting Zen. The program directory defaults to `/opt/zen-browser-bin`; for another installation, run `ZEN_INSTALL_DIR="/path/to/zen/program" ./install.sh`.
 
 Restart Zen. In the Browser Console (Ctrl+Shift+J) you should see `[zen-tree-tabs] loaded, script saved …`. If nothing loads on the very first install, use **about:support → Clear startup cache…** once.
 
-> A Zen update may replace its program directory. If the mod stops loading after an update, re-run the two `sudo cp` commands.
+> A Zen update may replace its program directory. If the mod stops loading after an update, re-run `./install.sh` and run the printed loader-install command if either program file is missing.
 
 ## Usage
 
